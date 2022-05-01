@@ -13,6 +13,7 @@ trcount [OPTIONS]... AGENT...
 OPTIONS
 -c <community> snmp community in snmpv2.
 -e <regexp> when regexp match I/F name or I/F descripiton, display with priority.
+-i <interval> SNMP polling interval [sec].
 ```
 
 ## Support
