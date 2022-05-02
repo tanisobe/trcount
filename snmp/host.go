@@ -60,6 +60,8 @@ type Counter struct {
 	Before     int64
 	LastTime   time.Time
 	BeforeTime time.Time
+	Diff       int64
+	Rate       int64
 }
 
 type Option func(*Host) error
@@ -141,7 +143,7 @@ func (h *Host) InitHost() error {
 
 	//GET IF MIB
 	h.dlog.Printf("Get ALL Interface Value")
-	oid = ".1.3.6.1.2.1.31"
+	oid = ".1.3.6.1.2.1.31.1.1.1"
 	if err := h.params.BulkWalk(oid, h.UpdateIFValue); err != nil {
 		h.dlog.Printf("Get() err: %v", err)
 		return err
@@ -157,11 +159,11 @@ func (h *Host) Update() {
 	defer h.params.Conn.Close()
 
 	//GET ALL Interface Value
-	oid := ".1.3.6.1.2.1.2"
+	oid := ".1.3.6.1.2.1.2.2"
 	if err := h.params.BulkWalk(oid, h.UpdateIFValue); err != nil {
 		h.dlog.Printf("Get() err: %v", err)
 	}
-	oid = ".1.3.6.1.2.1.31"
+	oid = ".1.3.6.1.2.1.31.1.1.1"
 	if err := h.params.BulkWalk(oid, h.UpdateIFValue); err != nil {
 		h.dlog.Printf("Get() err: %v", err)
 	}
@@ -231,10 +233,7 @@ func (c *Counter) Update(v int64, t time.Time) {
 	c.Before = c.Last
 	c.LastTime = t
 	c.Last = v
-}
-
-func (c *Counter) FlowRate() int64 {
+	c.Diff = c.Last - c.Before
 	d := c.LastTime.Sub(c.BeforeTime)
-	//	return (c.Last - c.Before)
-	return (c.Last - c.Before) / int64(d.Seconds())
+	c.Rate = c.Diff / int64(d.Seconds())
 }

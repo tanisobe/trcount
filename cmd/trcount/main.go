@@ -20,7 +20,7 @@ var (
 )
 
 func main() {
-	snmp.Expr = flag.String("e", "", "Narrow down to IFs that match with regular expressions. Matching target is IF name and IF Description")
+	snmp.Expr = *flag.String("e", "", "Narrow down to IFs that match with regular expressions. Matching target is IF name and IF Description")
 	dbg_mode = flag.Bool("debug", false, "start with debug mode. deubg mode dump trace log")
 	cstring := flag.String("c", "public", "snmp community string.")
 	interval := flag.Int("i", 5, "SNMP polling interval [sec]. minimum 5")
@@ -91,7 +91,7 @@ func run(dlog *log.Logger, cstring *string, interval int, args []string) {
 	g.SetCurrentView("main")
 	v.SetCursor(0, 0)
 	v, err = g.SetView("regexp", 0, maxY-2, maxX-2, maxY)
-	fmt.Fprintf(v, *snmp.Expr)
+	fmt.Fprintf(v, snmp.Expr)
 
 	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
 		log.Panicln(err)
