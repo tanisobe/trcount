@@ -1,0 +1,3 @@
+[submodule "deployments/test"]
+	path = deployments/test
+	url = https://github.com/intraway/snmp_mock.git
