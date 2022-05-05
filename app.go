@@ -1,20 +1,20 @@
 package trmon
 
 import (
+	"errors"
 	"fmt"
 	"io"
-	"os"
 	"time"
 
 	"github.com/jroimartin/gocui"
 )
 
-func Run(community string, interval int, expr string, isDebug bool, f io.Writer, args []string) {
+func Run(community string, interval int, expr string, isDebug bool, f io.Writer, args []string) error {
 	log := NewLogger(isDebug, f)
-
-	log.Debug().Msg("start with debug mode")
-
 	hosts := make([]*Host, 0)
+
+	// SNMP host Initalize
+	log.Debug().Msg("SNMP host init")
 	for _, name := range args {
 		host, err := NewHost(name, community, log)
 		if err != nil {
@@ -26,10 +26,10 @@ func Run(community string, interval int, expr string, isDebug bool, f io.Writer,
 
 	if len(hosts) == 0 {
 		log.Warn().Msgf("No accesstable host")
-		os.Exit(0)
+		return errors.New("No accesstable host")
 	}
-
 	// CUI Initialize
+	log.Debug().Msg("CUI initalize")
 	g, err := gocui.NewGui(gocui.OutputNormal)
 	if err != nil {
 		log.Error().Msgf("%v", err)
@@ -54,6 +54,7 @@ func Run(community string, interval int, expr string, isDebug bool, f io.Writer,
 	fmt.Fprintf(v, expr)
 
 	// Update host information every unit time
+	log.Debug().Msg("Start goroutin to update host")
 	for _, host := range hosts {
 		h := host
 		go func(h *Host) {
@@ -68,7 +69,10 @@ func Run(community string, interval int, expr string, isDebug bool, f io.Writer,
 	}
 
 	// mainloop for CUI Event
+	log.Debug().Msg("Start CUI main loop")
 	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
-		log.Panic().Msgf("%v", err)
+		log.Error().Msgf("%v", err)
+		return err
 	}
+	return nil
 }

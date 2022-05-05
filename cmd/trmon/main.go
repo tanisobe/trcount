@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
+	"runtime/debug"
 	"time"
 
 	"log"
@@ -28,6 +28,10 @@ func main() {
 	flag.Parse()
 
 	if *v {
+		info, ok := debug.ReadBuildInfo()
+		if ok {
+			version = info.Main.Version
+		}
 		fmt.Printf("trmon: traffic monitor\nversion: %s\nrevision:%s\n", version, revision)
 		os.Exit(0)
 	}
@@ -53,7 +57,7 @@ func main() {
 			os.Exit(1)
 		}
 	} else {
-		f = ioutil.Discard
+		f = os.Stderr
 	}
 
 	trmon.Run(*c, *i, *e, *d, f, flag.Args())
