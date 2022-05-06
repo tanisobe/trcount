@@ -16,29 +16,33 @@ func TestNewHost(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    *Host
 		wantErr bool
 	}{
 		{
+			name: "valid snmp target",
+			args: args{
+				hostname:  "127.0.0.1",
+				community: "my_comm",
+				logger:    NewLogger(true, os.Stdout),
+			},
+			wantErr: false,
+		},
+		{
 			name: "can't connect snmp target",
 			args: args{
-				hostname:  "localhost",
+				hostname:  "127.0.0.1",
 				community: "",
 				logger:    NewLogger(true, os.Stdout),
 			},
-			want:    nil,
 			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := NewHost(tt.args.hostname, tt.args.community, tt.args.logger)
+			_, err := NewHost(tt.args.hostname, tt.args.community, tt.args.logger)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewHost() error = %v, wantErr %v", err, tt.wantErr)
 				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewHost() = %v, want %v", got, tt.want)
 			}
 		})
 	}

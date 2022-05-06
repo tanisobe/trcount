@@ -3,50 +3,102 @@ package trmon
 import (
 	"os"
 	"testing"
+
+	"github.com/jroimartin/gocui"
 )
 
-func TestRun(t *testing.T) {
+func TestApp_initHosts(t *testing.T) {
+	type fields struct {
+		hosts []*Host
+		gui   *gocui.Gui
+		log   *Logger
+	}
 	type args struct {
+		hostnames []string
 		community string
-		interval  int
-		expr      string
-		isDebug   bool
-		args      []string
 	}
 	tests := []struct {
 		name    string
+		fields  fields
 		args    args
 		wantErr bool
 	}{
 		// TODO: Add test cases.
 		{
 			name: "no hosts",
+			fields: fields{
+				hosts: make([]*Host, 0),
+				gui:   &gocui.Gui{},
+				log:   NewLogger(true, os.Stdout),
+			},
 			args: args{
-				community: "my_conn",
-				interval:  5,
-				expr:      "",
-				isDebug:   true,
-				args:      []string{},
+				hostnames: []string{},
+				community: "my_comm",
 			},
 			wantErr: true,
 		},
 		{
-			name: "invalid community hosts",
+			name: "invalid community",
+			fields: fields{
+				hosts: make([]*Host, 0),
+				gui:   &gocui.Gui{},
+				log:   NewLogger(true, os.Stdout),
+			},
 			args: args{
-				community: "invalid",
-				interval:  5,
-				expr:      "",
-				isDebug:   true,
-				args:      []string{"127.0.0.1"},
+				hostnames: []string{"127.0.0.1"},
+				community: "mogear",
 			},
 			wantErr: true,
+		},
+		{
+			name: "unreachable host",
+			fields: fields{
+				hosts: make([]*Host, 0),
+				gui:   &gocui.Gui{},
+				log:   NewLogger(true, os.Stdout),
+			},
+			args: args{
+				hostnames: []string{"127.0.0.254"},
+				community: "my_comm",
+			},
+			wantErr: true,
+		},
+		{
+			name: "valid hosts",
+			fields: fields{
+				hosts: make([]*Host, 0),
+				gui:   &gocui.Gui{},
+				log:   NewLogger(true, os.Stdout),
+			},
+			args: args{
+				hostnames: []string{"127.0.0.1", "127.0.0.1"},
+				community: "my_comm",
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid and invalid hosts",
+			fields: fields{
+				hosts: make([]*Host, 0),
+				gui:   &gocui.Gui{},
+				log:   NewLogger(true, os.Stdout),
+			},
+			args: args{
+				hostnames: []string{"127.0.0.1", "invalid-host"},
+				community: "my_comm",
+			},
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := Run(tt.args.community, tt.args.interval, tt.args.expr, tt.args.isDebug, os.Stderr, tt.args.args); (err != nil) != tt.wantErr {
-				t.Errorf("Run() error = %v, wantErr %v", err, tt.wantErr)
-				return
+			a := &App{
+				hosts: tt.fields.hosts,
+				gui:   tt.fields.gui,
+				log:   tt.fields.log,
+			}
+			if err := a.initHosts(tt.args.hostnames, tt.args.community); (err != nil) != tt.wantErr {
+				t.Errorf("App.initHosts() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
