@@ -29,6 +29,9 @@ func setKeybindgings(g *gocui.Gui, mw *MainWidget, nw *NarrowWidget) {
 	if err := g.SetKeybinding("main", 'u', gocui.ModNone, toggleUnit(mw)); err != nil {
 		log.Panicln(err)
 	}
+	if err := g.SetKeybinding("main", 'p', gocui.ModNone, togglebps(mw)); err != nil {
+		log.Panicln(err)
+	}
 	if err := g.SetKeybinding("main", 'h', gocui.ModNone, createHelp); err != nil {
 		log.Panicln(err)
 	}
@@ -141,9 +144,26 @@ func toggleUnit(m *MainWidget) func(g *gocui.Gui, v *gocui.View) error {
 			m.setUnit(Mbps)
 		case Mbps:
 			m.setUnit(Bps)
+		case Pps:
+			m.setUnit(Kpps)
+		case Kpps:
+			m.setUnit(Mpps)
+		case Mpps:
+			m.setUnit(Pps)
 		default:
 			return fmt.Errorf("Unspecified value %v", m.unit)
 		}
 		return nil
+	}
+}
+
+func togglebps(m *MainWidget) func(g *gocui.Gui, v *gocui.View) error {
+	return func(g *gocui.Gui, v *gocui.View) error {
+		if m.displaybps {
+			m.displaybps = false
+			return m.setUnit(Pps)
+		}
+		m.displaybps = true
+		return m.setUnit(Bps)
 	}
 }

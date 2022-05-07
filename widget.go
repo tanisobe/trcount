@@ -15,8 +15,9 @@ const (
 	h: help
 	j: down cursor
 	k: up cursor
-	u: toggle the unit of display traffic [bps][kbps][mbps]
+	u: toggle the unit of bps or pps [][k][m]
 	d: toggle the display of Down I/F
+	p: toggle the display of bps or pps
 	/: narrow down with regex
 	   Targets of narrowing down are Description and I/F
 	q: quit
@@ -29,6 +30,9 @@ const (
 	Bps Unit = iota
 	Kbps
 	Mbps
+	Pps
+	Kpps
+	Mpps
 )
 
 func (u Unit) String() string {
@@ -39,6 +43,12 @@ func (u Unit) String() string {
 		return "kbps"
 	case Mbps:
 		return "mbps"
+	case Pps:
+		return "pps"
+	case Kpps:
+		return "kpps"
+	case Mpps:
+		return "mpps"
 	}
 	return ""
 }
@@ -49,6 +59,7 @@ type MainWidget struct {
 	Name          string
 	Hosts         []*Host
 	displayDownIF bool
+	displaybps    bool
 	unit          Unit
 	unitCalc      UnitCalc
 	log           *Logger
@@ -68,6 +79,7 @@ func NewMainWidget(name string, hosts []*Host, nw *NarrowWidget, l *Logger) *Mai
 		Name:          name,
 		Hosts:         hosts,
 		displayDownIF: true,
+		displaybps:    true,
 		NarrowWidget:  nw,
 		log:           l,
 	}
@@ -86,6 +98,12 @@ func (m *MainWidget) setUnit(unit Unit) error {
 		m.unitCalc = func(x int64) int64 { return x * 8 / 1024 }
 	case Mbps:
 		m.unitCalc = func(x int64) int64 { return x * 8 / 1024 / 1024 }
+	case Pps:
+		m.unitCalc = func(x int64) int64 { return x }
+	case Kpps:
+		m.unitCalc = func(x int64) int64 { return x / 1000 }
+	case Mpps:
+		m.unitCalc = func(x int64) int64 { return x / 1000 / 1000 }
 	default:
 		return fmt.Errorf("Unspecified value %v", m.unit)
 	}
@@ -114,7 +132,7 @@ func (m *MainWidget) print(v *gocui.View) {
 	t.SetHeader([]string{
 		"Name",
 		"I/F",
-		"Status",
+		"Stat",
 		fmt.Sprintf("IN[%v]", m.unit.String()),
 		fmt.Sprintf("OUT[%v]", m.unit.String()),
 		"InErr",
@@ -187,12 +205,19 @@ func (m *MainWidget) printHost(narrowed *[][]string, other *[][]string, h *Host)
 			continue
 		}
 		s := fmt.Sprintf("%v %v", h.IFs[k].Desc, h.IFs[k].Alias)
+		// toggle display bps or pps
+		in := h.IFs[k].InOctets.Rate
+		out := h.IFs[k].OutOctets.Rate
+		if !m.displaybps {
+			in = h.IFs[k].InUcastPkts.Rate
+			out = h.IFs[k].OutUcastPkts.Rate
+		}
 		data := []string{
 			h.Name,
 			h.IFs[k].Desc,
 			h.IFs[k].OperStatus,
-			humanize.Comma(m.unitCalc(h.IFs[k].InOctets.Rate)),
-			humanize.Comma(m.unitCalc(h.IFs[k].OutOctets.Rate)),
+			humanize.Comma(m.unitCalc(in)),
+			humanize.Comma(m.unitCalc(out)),
 			humanize.Comma(h.IFs[k].InError.Diff),
 			humanize.Comma(h.IFs[k].OutError.Diff),
 			humanize.Comma(h.IFs[k].InDiscards.Diff),
