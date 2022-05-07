@@ -12,15 +12,17 @@ import (
 
 const (
 	helpMessage = `
+	q: quit
 	h: help
-	j: down cursor
-	k: up cursor
 	u: toggle the unit of bps or pps [][k][m]
 	d: toggle the display of Down I/F
 	p: toggle the display of bps or pps
 	/: narrow down with regex
 	   Targets of narrowing down are Description and I/F
-	q: quit
+	j: down cursor
+	k: up cursor
+	Ctrl + u : page down cursor
+	Ctrl + d : page up cursor
 	`
 )
 
@@ -119,6 +121,8 @@ func (m *MainWidget) Layout(g *gocui.Gui) error {
 		}
 	}
 	v.Clear()
+	v.Highlight = true
+	v.SelBgColor = gocui.ColorMagenta
 	m.print(v)
 	return nil
 }
@@ -266,7 +270,6 @@ func (w *NarrowWidget) Layout(g *gocui.Gui) error {
 		}
 	}
 	v.Editable = true
-	v.FgColor = gocui.ColorWhite
 	v.Editor = &Editor{}
 	return nil
 }

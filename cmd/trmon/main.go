@@ -23,7 +23,7 @@ func main() {
 	Matching target is IF name and IF Description`)
 	d := flag.Bool("debug", false, "start with debug mode. deubg mode dump trace log")
 	c := flag.String("c", "public", "snmp community string.")
-	i := flag.Int("i", 5, "SNMP polling interval [sec]. minimum 5")
+	i := flag.Int("i", 10, "SNMP polling interval [sec]. minimum 5")
 	l := flag.Int("l", 7200, "trmon continuous operation time [sec].")
 	v := flag.Bool("v", false, "show app version")
 	flag.Parse()

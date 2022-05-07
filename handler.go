@@ -23,6 +23,12 @@ func setKeybindgings(g *gocui.Gui, mw *MainWidget, nw *NarrowWidget) {
 	if err := g.SetKeybinding("main", '/', gocui.ModNone, changeRegexp); err != nil {
 		log.Panicln(err)
 	}
+	if err := g.SetKeybinding("main", gocui.KeyCtrlD, gocui.ModNone, pageDown); err != nil {
+		log.Panicln(err)
+	}
+	if err := g.SetKeybinding("main", gocui.KeyCtrlU, gocui.ModNone, pageUp); err != nil {
+		log.Panicln(err)
+	}
 	if err := g.SetKeybinding("main", 'd', gocui.ModNone, toggleDownIF(mw)); err != nil {
 		log.Panicln(err)
 	}
@@ -75,6 +81,40 @@ func upCursor(g *gocui.Gui, v *gocui.View) error {
 		if err := v.SetCursor(cx, cy-1); err != nil && oy > 0 {
 			if err := v.SetOrigin(ox, oy-1); err != nil {
 				return err
+			}
+		}
+	}
+	return nil
+}
+
+func pageDown(g *gocui.Gui, v *gocui.View) error {
+	if v != nil {
+		ox, oy := v.Origin()
+		cx, cy := v.Cursor()
+		_, vy := v.Size()
+		if err := v.SetCursor(cx, cy+vy); err != nil {
+			if err := v.SetOrigin(ox, oy+vy); err != nil {
+				return err
+			}
+		}
+
+	}
+	return nil
+}
+
+func pageUp(g *gocui.Gui, v *gocui.View) error {
+	if v != nil {
+		ox, oy := v.Origin()
+		cx, cy := v.Cursor()
+		_, vy := v.Size()
+		if err := v.SetCursor(cx, cy-vy); err != nil {
+			if oy > vy-1 {
+				if err := v.SetOrigin(ox, oy-vy); err != nil {
+					return err
+				}
+			} else {
+				v.SetCursor(cx, 0)
+				v.SetOrigin(ox, 0)
 			}
 		}
 	}

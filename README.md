@@ -1,5 +1,7 @@
 # trmon
-trmon is a network traffic monitoring tool via SNMP.
+trmon is a network traffic monitoring CUI tool via SNMP.
+
+![trmon](https://user-images.githubusercontent.com/1511945/167248808-cce3cc91-e5a5-40dd-88d1-5dd471cc34f0.jpg)
 
 ## Installation
 ```bash
@@ -17,7 +19,10 @@ OPTIONS
 -i <interval> SNMP polling interval [sec].
 -l <lifespan> trmon continuous operation time [sec].
 ```
-
+## Example
+```bash
+trmon -c "my_comm" my-router my-switch
+```
 ## Support
 this tool support only snmp v2.
 

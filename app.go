@@ -56,7 +56,7 @@ func (a *App) Run(hostnames []string, c *Config) error {
 
 	a.suicide(ctx, c.Lifespan)
 	a.updateHosts(ctx, c.Interval)
-	a.showInitView(ctx, c.Interval*2)
+	a.showInitView(ctx, c.Interval)
 
 	// mainloop for CUI Event
 	a.log.Debug().Msg("Start CUI main loop")
@@ -115,6 +115,8 @@ func (a *App) updateHosts(ctx context.Context, interval int) {
 		h := host
 		c := context.Context(ctx)
 		go func(ctx context.Context, h *Host) {
+			a.log.Debug().Msgf("First Update %v", h.Name)
+			h.Update()
 			for {
 				select {
 				case <-ticker.C:
