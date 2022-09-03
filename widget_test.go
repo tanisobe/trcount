@@ -25,6 +25,14 @@ func TestMainWidget_setUnit(t *testing.T) {
 	}{
 		// TODO: Add test cases.
 		{
+			name:   "valid value",
+			fields: fields{},
+			args: args{
+				unit: Bps,
+			},
+			wantErr: false,
+		},
+		{
 			name:   "Unspecified value",
 			fields: fields{},
 			args: args{

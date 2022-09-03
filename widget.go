@@ -137,6 +137,31 @@ func (m *MainWidget) Layout(g *gocui.Gui) error {
 }
 
 func (m *MainWidget) print(v *gocui.View) {
+	t := newViewTable(v, m.unit.String())
+
+	//Always be in the same order of display
+	var keys []int
+	for k := range m.Hosts {
+		keys = append(keys, k)
+	}
+	sort.Ints(keys)
+
+	marked := make([][]string, 0, 300)
+	narrowed := make([][]string, 0, 300)
+	other := make([][]string, 0, 300)
+
+	for _, k := range keys {
+		m.classify(&marked, &narrowed, &other, m.Hosts[k])
+	}
+	// Set Row to TableView
+	setRowToTable(t, marked, tablewriter.FgYellowColor)
+	setRowToTable(t, narrowed, tablewriter.FgCyanColor)
+	setRowToTable(t, other, tablewriter.FgWhiteColor)
+
+	t.Render()
+}
+
+func newViewTable(v *gocui.View, unit string) *tablewriter.Table {
 	t := tablewriter.NewWriter(v)
 	t.SetRowLine(false)
 	t.SetBorder(false)
@@ -146,8 +171,8 @@ func (m *MainWidget) print(v *gocui.View) {
 		"Name",
 		"I/F",
 		"Stat",
-		fmt.Sprintf("IN[%v]", m.unit.String()),
-		fmt.Sprintf("OUT[%v]", m.unit.String()),
+		fmt.Sprintf("IN[%v]", unit),
+		fmt.Sprintf("OUT[%v]", unit),
 		"InErr",
 		"OutErr",
 		"InDis",
@@ -166,65 +191,24 @@ func (m *MainWidget) print(v *gocui.View) {
 		tablewriter.Colors{tablewriter.Bold, tablewriter.BgGreenColor, tablewriter.FgBlackColor},
 		tablewriter.Colors{tablewriter.Bold, tablewriter.BgGreenColor, tablewriter.FgBlackColor},
 	)
+	return t
+}
 
-	var keys []int
-	for k := range m.Hosts {
-		keys = append(keys, k)
-	}
-	sort.Ints(keys)
-
-	marked := make([][]string, 0, 300)
-	for col := range marked {
-		marked[col] = make([]string, 0, 10)
-	}
-
-	narrowed := make([][]string, 0, 300)
-	for col := range narrowed {
-		narrowed[col] = make([]string, 0, 10)
-	}
-
-	other := make([][]string, 0, 300)
-	for col := range other {
-		other[col] = make([]string, 0, 10)
-	}
-
-	for _, k := range keys {
-		m.classify(&marked, &narrowed, &other, m.Hosts[k])
-	}
-	// Set color
-	for _, row := range marked {
+func setRowToTable(t *tablewriter.Table, rows [][]string, color int) {
+	for _, row := range rows {
 		t.Rich(row, []tablewriter.Colors{
-			{tablewriter.FgGreenColor},
-			{tablewriter.FgGreenColor},
-			{tablewriter.FgGreenColor},
-			{tablewriter.FgGreenColor},
-			{tablewriter.FgGreenColor},
-			{tablewriter.FgGreenColor},
-			{tablewriter.FgGreenColor},
-			{tablewriter.FgGreenColor},
-			{tablewriter.FgGreenColor},
-			{tablewriter.FgGreenColor},
+			{color},
+			{color},
+			{color},
+			{color},
+			{color},
+			{color},
+			{color},
+			{color},
+			{color},
+			{color},
 		})
 	}
-	for _, row := range narrowed {
-		t.Rich(row, []tablewriter.Colors{
-			{tablewriter.FgCyanColor},
-			{tablewriter.FgCyanColor},
-			{tablewriter.FgCyanColor},
-			{tablewriter.FgCyanColor},
-			{tablewriter.FgCyanColor},
-			{tablewriter.FgCyanColor},
-			{tablewriter.FgCyanColor},
-			{tablewriter.FgCyanColor},
-			{tablewriter.FgCyanColor},
-			{tablewriter.FgCyanColor},
-		})
-	}
-	for _, row := range other {
-		t.Append(row)
-	}
-	//
-	t.Render()
 }
 
 func (m *MainWidget) classify(marked *[][]string, narrowed *[][]string, other *[][]string, h *Host) {
