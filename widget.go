@@ -14,15 +14,18 @@ const (
 	helpMessage = `
 	q: quit
 	h: help
+	
 	u: toggle the unit of bps or pps [][k][m]
 	d: toggle the display of Down I/F
 	p: toggle the display of bps or pps
 	/: narrow down with regex
 	   Targets of narrowing down are Description and I/F
-	j: down cursor
-	k: up cursor
-	Ctrl + u : page down cursor
+	Enter: mark that line. Or unmark.
+
+	k, ↑: up cursor
+	j, ↓: down cursor
 	Ctrl + d : page up cursor
+	Ctrl + u : page down cursor
 	`
 )
 
@@ -57,6 +60,11 @@ func (u Unit) String() string {
 
 type UnitCalc func(int64) int64
 
+type marked struct {
+	Host string
+	IF   string
+}
+
 type MainWidget struct {
 	Name          string
 	Hosts         []*Host
@@ -65,6 +73,7 @@ type MainWidget struct {
 	unit          Unit
 	unitCalc      UnitCalc
 	log           *Logger
+	Markeds       []marked
 	*NarrowWidget
 }
 
@@ -164,17 +173,38 @@ func (m *MainWidget) print(v *gocui.View) {
 	}
 	sort.Ints(keys)
 
+	marked := make([][]string, 0, 300)
+	for col := range marked {
+		marked[col] = make([]string, 0, 10)
+	}
+
 	narrowed := make([][]string, 0, 300)
 	for col := range narrowed {
 		narrowed[col] = make([]string, 0, 10)
 	}
+
 	other := make([][]string, 0, 300)
 	for col := range other {
 		other[col] = make([]string, 0, 10)
 	}
 
 	for _, k := range keys {
-		m.printHost(&narrowed, &other, m.Hosts[k])
+		m.classify(&marked, &narrowed, &other, m.Hosts[k])
+	}
+	// Set color
+	for _, row := range marked {
+		t.Rich(row, []tablewriter.Colors{
+			{tablewriter.FgGreenColor},
+			{tablewriter.FgGreenColor},
+			{tablewriter.FgGreenColor},
+			{tablewriter.FgGreenColor},
+			{tablewriter.FgGreenColor},
+			{tablewriter.FgGreenColor},
+			{tablewriter.FgGreenColor},
+			{tablewriter.FgGreenColor},
+			{tablewriter.FgGreenColor},
+			{tablewriter.FgGreenColor},
+		})
 	}
 	for _, row := range narrowed {
 		t.Rich(row, []tablewriter.Colors{
@@ -193,10 +223,11 @@ func (m *MainWidget) print(v *gocui.View) {
 	for _, row := range other {
 		t.Append(row)
 	}
+	//
 	t.Render()
 }
 
-func (m *MainWidget) printHost(narrowed *[][]string, other *[][]string, h *Host) {
+func (m *MainWidget) classify(marked *[][]string, narrowed *[][]string, other *[][]string, h *Host) {
 	var keys []int
 	for k := range h.IFs {
 		keys = append(keys, k)
@@ -208,7 +239,6 @@ func (m *MainWidget) printHost(narrowed *[][]string, other *[][]string, h *Host)
 		if !m.displayDownIF && h.IFs[k].OperStatus == "Down" {
 			continue
 		}
-		s := fmt.Sprintf("%v %v", h.IFs[k].Desc, h.IFs[k].Alias)
 		// toggle display bps or pps
 		in := h.IFs[k].InOctets.Rate
 		out := h.IFs[k].OutOctets.Rate
@@ -216,6 +246,7 @@ func (m *MainWidget) printHost(narrowed *[][]string, other *[][]string, h *Host)
 			in = h.IFs[k].InUcastPkts.Rate
 			out = h.IFs[k].OutUcastPkts.Rate
 		}
+
 		data := []string{
 			h.Name,
 			h.IFs[k].Desc,
@@ -228,6 +259,19 @@ func (m *MainWidget) printHost(narrowed *[][]string, other *[][]string, h *Host)
 			humanize.Comma(h.IFs[k].OutDiscards.Diff),
 			h.IFs[k].Alias,
 		}
+		// Classify Line
+		hit := false
+		for _, v := range m.Markeds {
+			if v.Host == h.Name && v.IF == h.IFs[k].Desc {
+				*marked = append(*marked, data)
+				hit = true
+				continue
+			}
+		}
+		if hit {
+			continue
+		}
+		s := fmt.Sprintf("%v %v", h.IFs[k].Desc, h.IFs[k].Alias)
 		if m.NarrowWidget.regexp.MatchString(s) {
 			*narrowed = append(*narrowed, data)
 		} else {
