@@ -3,6 +3,7 @@ package trmon
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/jroimartin/gocui"
 )
@@ -18,6 +19,12 @@ func setKeybindgings(g *gocui.Gui, mw *MainWidget, nw *NarrowWidget) {
 		log.Panicln(err)
 	}
 	if err := g.SetKeybinding("main", 'j', gocui.ModNone, downCursor); err != nil {
+		log.Panicln(err)
+	}
+	if err := g.SetKeybinding("main", gocui.KeyArrowUp, gocui.ModNone, upCursor); err != nil {
+		log.Panicln(err)
+	}
+	if err := g.SetKeybinding("main", gocui.KeyArrowDown, gocui.ModNone, downCursor); err != nil {
 		log.Panicln(err)
 	}
 	if err := g.SetKeybinding("main", '/', gocui.ModNone, changeRegexp); err != nil {
@@ -39,6 +46,9 @@ func setKeybindgings(g *gocui.Gui, mw *MainWidget, nw *NarrowWidget) {
 		log.Panicln(err)
 	}
 	if err := g.SetKeybinding("main", 'h', gocui.ModNone, createHelp); err != nil {
+		log.Panicln(err)
+	}
+	if err := g.SetKeybinding("main", gocui.KeyEnter, gocui.ModNone, toggleMark(mw)); err != nil {
 		log.Panicln(err)
 	}
 	if err := g.SetKeybinding("help", 'q', gocui.ModNone, terminateHelp); err != nil {
@@ -205,5 +215,35 @@ func togglebps(m *MainWidget) func(g *gocui.Gui, v *gocui.View) error {
 		}
 		m.displaybps = true
 		return m.setUnit(Bps)
+	}
+}
+
+func toggleMark(m *MainWidget) func(g *gocui.Gui, v *gocui.View) error {
+	return func(g *gocui.Gui, v *gocui.View) error {
+		_, y := v.Cursor()
+		line, err := v.Line(y)
+		if err != nil {
+			m.log.Debug().Msg("Failed to get line")
+			return err
+		}
+		parsed := strings.Split(line, "|")
+		if len(parsed) < 2 {
+			m.log.Debug().Msg("Failed to parse mark line via |")
+			return nil
+		}
+		host := strings.Trim(parsed[0], " \t")
+		ifname := strings.Trim(parsed[1], " \t")
+		for i, v := range m.Markeds {
+			// Delete if already marked
+			if v.Host == host && v.IF == ifname {
+				m.log.Debug().Msgf("delete marked host %v, if %v", host, ifname)
+				m.Markeds[i] = m.Markeds[len(m.Markeds)-1]
+				m.Markeds = m.Markeds[:len(m.Markeds)-1]
+				return nil
+			}
+		}
+		m.log.Debug().Msgf("mark host %v, if %v", host, ifname)
+		m.Markeds = append(m.Markeds, marked{host, ifname})
+		return nil
 	}
 }
