@@ -197,7 +197,7 @@ func (c *Counter) update(v int64, t time.Time) {
 	c.Last = v
 	//When the counter goes around
 	if d := c.Last - c.Before; d < 0 {
-		c.log.Warn().Msgf("the counter %v goes around", c.name)
+		c.log.Debug().Msgf("the counter %v goes around", c.name)
 		c.Diff = 0
 	} else {
 		c.Diff = d
@@ -205,7 +205,7 @@ func (c *Counter) update(v int64, t time.Time) {
 	//When the time difference is less than one second
 	d := int64((c.LastTime.Sub(c.BeforeTime)).Seconds())
 	if d == 0 {
-		c.log.Warn().Msgf("zero devide %v", c.name)
+		c.log.Debug().Msgf("zero devide %v", c.name)
 		c.Rate = 0
 	} else {
 		c.Rate = c.Diff / d

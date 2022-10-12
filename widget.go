@@ -270,7 +270,7 @@ func NewNarrowWidget(name string, expr string, l *Logger) *NarrowWidget {
 		log:  l,
 	}
 	if err := n.setRegexp(expr); err != nil {
-		n.log.Warn().Msgf("failed setRegexp %v", err)
+		n.log.Debug().Msgf("failed setRegexp %v", err)
 		return nil
 	}
 	return n
